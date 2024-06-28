@@ -5,7 +5,8 @@ use {
     rustapp_template::{app, cli, config},
 };
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let mut mycli: cli::Cli = cli::Cli::parse();
     if mycli.name.is_none() && mycli.command.is_none() {
         error!("Please input the command");
