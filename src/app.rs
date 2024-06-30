@@ -1,12 +1,24 @@
 use {
     crate::{cli, config::MyConfig, hooks::AppHooks, utils},
     clap::Parser,
+    std::sync::{Arc, Mutex},
 };
 
 pub struct RunTime {
     pub config: MyConfig,
     pub cli: cli::Cli,
     pub hooks: AppHooks,
+    pub context: Arc<Mutex<Context>>,
+}
+
+pub struct Context {
+    pub value: u64,
+}
+
+impl Context {
+    pub fn new() -> Self {
+        Self { value: 0 }
+    }
 }
 
 pub struct InitOptions {
@@ -33,6 +45,7 @@ impl RunTime {
             config: MyConfig::from_cli(&cli),
             cli,
             hooks: AppHooks::new(),
+            context: Arc::new(Mutex::new(Context::new())),
         }
     }
 

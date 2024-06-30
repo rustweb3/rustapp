@@ -12,6 +12,7 @@
 4. 命令行应用使用 clap 定义，映射在 src/cli.rs
 5. hooks 定义, 考虑后期扩展定义 hooks 函数模块，定义在 src/hooks.rs 中，应用中可以通过 runtime.hooks.run_hooks 触发
 6. jobs 分离定义，接受 Runtime 的引用，根据cli 中定义的 Command 调用 job
+7. 定义一个线程安全的上下文对象，可供并发控制共享 数据定义在 src/app.rs 中的 **Context** 定义。
 
 应用执行流程图:
 
