@@ -1,6 +1,6 @@
 # rustapp_template
 
-这是一个 rustapp 开发基础框架，集合了常见的功能，为后期rustweb3应用开发的基础框架。
+这是一个 rustapp 开发基础框架，集合了常见的功能，为后期 **rustweb3** 应用开发的基础框架。
 
 [Create repo with this template](https://github.com/new?template_name=rustapp_template&template_owner=rustweb3)
 
