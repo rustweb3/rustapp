@@ -1,58 +1,52 @@
 use {
-    serde::Deserialize,
+    crate::{cli, utils},
+    anyhow::{Ok, Result},
+    serde::{Deserialize, Serialize},
     std::{fs, path::PathBuf},
 };
 
-#[derive(Debug, Deserialize)]
+pub const APP_NAME: &str = "rustapp_template";
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct MyConfig {
     pub main: Main,
 }
 
-const DEFAULT_CONFIG_PATH: &str = "./config.toml";
-
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Main {
     pub debug: bool,
 }
 
-pub fn home_file(sub_path: &str) -> Option<PathBuf> {
-    match dirs::home_dir().unwrap() {
-        user_home => Some(user_home.join(sub_path)),
-    }
-}
-
 impl MyConfig {
-    pub fn default_path() -> PathBuf {
-        home_file(DEFAULT_CONFIG_PATH).unwrap()
+    pub fn default() -> Self {
+        Self {
+            main: Main { debug: false },
+        }
     }
-    pub fn load(path: &Option<PathBuf>, merge_env: bool) -> MyConfig {
+
+    pub fn from_cli(cli: &cli::Cli) -> Self {
         let config_path = {
-            if path.is_none() {
-                MyConfig::default_path()
+            if cli.config.is_some() {
+                let cli_path: Option<PathBuf> = cli.config.clone();
+                cli_path.unwrap()
             } else {
-                path.as_ref().unwrap().to_path_buf()
+                let default_path = utils::default_app_config_path().unwrap();
+                default_path
             }
         };
+        MyConfig::load(&config_path).unwrap()
+    }
 
-        match fs::metadata(&config_path) {
-            Ok(_) => {}
-            Err(_) => {
-                eprintln!("Config file not found: {:?}", config_path);
-                std::process::exit(1);
-            }
-        }
-
-        let config_content = fs::read_to_string(config_path).unwrap();
-        let mut config: MyConfig = toml::from_str(&config_content).unwrap();
-
-        if merge_env {
-            config.merge_env();
-        }
-        config
+    pub fn load(config_path: &PathBuf) -> Result<MyConfig> {
+        let config_content = fs::read_to_string(config_path)?;
+        let config: MyConfig = toml::from_str(&config_content)?;
+        Ok(config)
     }
     pub fn merge_env(&mut self) {
-        if let Ok(debug) = std::env::var("app_debug") {
-            self.main.debug = debug.parse().unwrap();
-        }
+        let debug = std::env::var("app_debug").unwrap_or_default();
+        self.main.debug = debug.parse().unwrap_or_default();
+    }
+    pub fn merge_cli(&mut self, cli: &cli::Cli) {
+        self.main.debug = cli.debug;
     }
 }

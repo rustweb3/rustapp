@@ -1,54 +1,48 @@
 use {
-    crate::cli,
-    ansi_term::Colour::{Blue, Green, Purple, Red, Yellow},
-    chrono::{FixedOffset, Utc},
-    env_logger::Env,
-    log::info,
-    std::io::Write,
+    crate::{cli, config::MyConfig, hooks::AppHooks, utils},
+    clap::Parser,
 };
 
-pub struct StartOptions {
-    pub log_init: bool,
-    pub merge_env: bool,
+pub struct RunTime {
+    pub config: MyConfig,
+    pub cli: cli::Cli,
+    pub hooks: AppHooks,
 }
 
-fn log_init(debug: bool) {
-    let default_level = if debug { "debug" } else { "info" };
-    let bj_time_zone = FixedOffset::east_opt(8 * 3600).unwrap();
-    env_logger::Builder::from_env(Env::default().default_filter_or(default_level))
-        .format_timestamp_millis()
-        .format(move |buf, record: &log::Record| {
-            let level = match record.level() {
-                log::Level::Error => Red.paint("ERROR"),
-                log::Level::Warn => Yellow.paint("WARN"),
-                log::Level::Info => Green.paint("INFO"),
-                log::Level::Debug => Blue.paint("DEBUG"),
-                log::Level::Trace => Purple.paint("TRACE"),
-            };
-
-            writeln!(
-                buf,
-                "{}",
-                format!(
-                    "[{} {}]  {}",
-                    Utc::now().with_timezone(&bj_time_zone).to_rfc3339(),
-                    level,
-                    record.args()
-                )
-            )
-        })
-        .init();
+pub struct InitOptions {
+    pub config_merge_env: bool,
+    pub config_merge_cli: bool,
 }
 
-pub fn start(mycli: &mut cli::Cli, config: &mut crate::config::MyConfig, options: &StartOptions) {
-    if mycli.debug {
-        config.main.debug = true;
+impl RunTime {
+    pub fn init() {
+        let app_dir = utils::app_dir("/config").unwrap();
+        if !app_dir.exists() {
+            std::fs::create_dir_all(&app_dir).unwrap();
+        }
+        let config_path = utils::default_app_config_path().unwrap();
+        if !config_path.exists() {
+            let default_config = MyConfig::default();
+            let config_content = toml::to_string(&default_config).unwrap();
+            std::fs::write(&config_path, config_content).unwrap();
+        }
     }
-    if options.log_init {
-        log_init(config.main.debug);
+    pub fn new() -> Self {
+        let cli: cli::Cli = cli::Cli::parse();
+        Self {
+            config: MyConfig::from_cli(&cli),
+            cli,
+            hooks: AppHooks::new(),
+        }
     }
-    if options.merge_env {
-        config.merge_env();
+
+    pub fn do_init(&mut self, options: InitOptions) {
+        utils::log_init(self.config.main.debug || self.cli.debug);
+        if options.config_merge_env {
+            self.config.merge_env();
+        }
+        if options.config_merge_cli {
+            self.config.merge_cli(&self.cli);
+        }
     }
-    info!("rust app started ....");
 }
