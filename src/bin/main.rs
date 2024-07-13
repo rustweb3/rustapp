@@ -19,10 +19,9 @@ async fn main() -> Result<()> {
     }
 
     match &runtime.cli.command {
-        Some(cli::Command::Test { list }) => {
+        Some(cli::Command::Job { name }) => {
             debug!("this is debug message !");
-            info!("list value is :  {}", list);
-            jobs::hello_job(&runtime);
+            jobs::do_job(name, &runtime).await?;
         }
         _ => {
             error!("Please input the command");

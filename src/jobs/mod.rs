@@ -1,10 +1,11 @@
 use {
     crate::app::RunTime,
+    anyhow::{Ok, Result},
     log::{info, warn},
     std::thread,
 };
 
-pub fn hello_job(r: &RunTime) {
+pub async fn hello_job(r: &RunTime) -> Result<()> {
     info!("config form hello.debug Job : {}", r.config.main.debug);
     warn!("cli form hello.debug Job : {}", r.cli.debug);
 
@@ -28,4 +29,12 @@ pub fn hello_job(r: &RunTime) {
     }
 
     info!("now the value is : {}", r.context.lock().unwrap().value);
+    Ok(())
+}
+
+pub async fn do_job(name: &str, runtime: &RunTime) -> Result<()> {
+    match name {
+        "test" => hello_job(runtime).await,
+        _ => Ok(()),
+    }
 }

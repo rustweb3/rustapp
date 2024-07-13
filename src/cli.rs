@@ -24,9 +24,9 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Command {
     /// does testing things
-    Test {
-        /// lists test values
+    Job {
+        /// job name will be execute
         #[arg(short, long)]
-        list: bool,
+        name: String,
     },
 }
