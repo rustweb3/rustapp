@@ -18,7 +18,7 @@ async fn main() -> Result<()> {
         return Err(anyhow::anyhow!("Please input the command"));
     }
 
-    match runtime.cli.command {
+    match &runtime.cli.command {
         Some(cli::Command::Test { list }) => {
             debug!("this is debug message !");
             info!("list value is :  {}", list);
