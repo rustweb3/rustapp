@@ -12,6 +12,7 @@ async fn main() -> Result<()> {
     runtime.do_init(app::InitOptions {
         config_merge_env: true,
         config_merge_cli: true,
+        log_init: true,
     });
     if runtime.cli.name.is_none() && runtime.cli.command.is_none() {
         error!("Please input the command");

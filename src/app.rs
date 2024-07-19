@@ -1,5 +1,5 @@
 use {
-    crate::{cli, config::MyConfig, hooks::AppHooks, utils},
+    crate::{cli, config::MyConfig, hooks::AppHooks, log, utils},
     clap::Parser,
     std::sync::{Arc, Mutex},
 };
@@ -24,6 +24,7 @@ impl Context {
 pub struct InitOptions {
     pub config_merge_env: bool,
     pub config_merge_cli: bool,
+    pub log_init: bool,
 }
 
 impl RunTime {
@@ -50,7 +51,9 @@ impl RunTime {
     }
 
     pub fn do_init(&mut self, options: InitOptions) {
-        utils::log_init(self.config.main.debug || self.cli.debug);
+        if options.log_init {
+            log::log_init(self.config.main.debug || self.cli.debug);
+        }
         if options.config_merge_env {
             self.config.merge_env();
         }
