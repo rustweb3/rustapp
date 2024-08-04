@@ -1,40 +1,31 @@
 use {
     crate::app::RunTime,
     anyhow::{Ok, Result},
-    log::{info, warn},
-    std::thread,
+    std::future::Future,
+    std::pin::Pin,
+    std::sync::Arc,
 };
 
-pub async fn hello_job(r: &RunTime) -> Result<()> {
-    info!("config form hello.debug Job : {}", r.config.main.debug);
-    warn!("cli form hello.debug Job : {}", r.cli.debug);
+mod hello;
 
-    let name = r.cli.name.as_deref().unwrap_or("world");
-    info!("Hello, {}!", name);
-    let mut thread_handles = vec![];
+pub type JobEntry<'a> = Arc<
+    dyn Fn(&'a RunTime) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> + Send + Sync + 'a,
+>;
 
-    for i in 0..10 {
-        let context = r.context.clone();
-        let handle = thread::spawn(move || {
-            info!("thread {} is running", i);
-            let mut ctx = context.lock().unwrap();
-            info!("context value: {}", ctx.value);
-            ctx.value += 1;
-        });
-        thread_handles.push(handle);
-    }
-
-    for handle in thread_handles {
-        handle.join().unwrap();
-    }
-
-    info!("now the value is : {}", r.context.lock().unwrap().value);
-    Ok(())
+macro_rules! init_job_maps {
+    ( { $($job_name:ident),* $(,)? } ) => {{
+        let mut jobs: std::collections::HashMap<&str, JobEntry> = std::collections::HashMap::new();
+        $(
+            // jobs.insert(stringify!($job_name), $job_name::job_entry);
+            jobs.insert(stringify!($job_name), Arc::new(|runtime| Box::pin(async { $job_name::job_entry(runtime).await })));
+        )*
+        jobs
+    }};
 }
 
-pub async fn do_job(name: &str, runtime: &RunTime) -> Result<()> {
-    match name {
-        "test" => hello_job(runtime).await,
-        _ => Ok(()),
-    }
+pub async fn do_job(name: &str, _runtime: &RunTime) -> Result<()> {
+    let jobs = init_job_maps!({ hello });
+    let job = jobs.get(name).unwrap();
+    job(_runtime).await?;
+    Ok(())
 }

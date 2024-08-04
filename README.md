@@ -6,12 +6,14 @@
 
 功能模块说明如下:
 
-1. *src/config.rs* 中定义 **APP_NAME** 定义应用名称,运行过程中会创建应用文件夹,应用文件夹: ~/.config/${APP_NAME}
+1. _src/config.rs_ 中定义 **APP_NAME** 定义应用名称,运行过程中会创建应用文件夹,应用文件夹: ~/.config/${APP_NAME}
 2. 默认配置文件路径: ~/.config/${APP_NAME}/config/config.toml, 可以在运行过程中，使用 -c 或者 --config 加载
-3. 配置文件映射定义在 *src/config.rs* 中的 **MyConfig**
+3. 配置文件映射定义在 _src/config.rs_ 中的 **MyConfig**
 4. 命令行应用使用 clap 定义，映射在 src/cli.rs
 5. hooks 定义, 考虑后期扩展定义 hooks 函数模块，定义在 src/hooks.rs 中，应用中可以通过 runtime.hooks.run_hooks 触发
-6. jobs 分离定义，接受 Runtime 的引用，根据cli 中定义的 Command 调用 job
+6. jobs 分离定义，接受 Runtime 的引用，根据 cli 中定义的 Command 调用 job
+   jobs 整体存储在一个 HashMap 中，key 为&str 类型，value 为自定义类型 JobEntry
+   使用宏 `init_job_maps` 快速完成初始化
 7. 定义一个线程安全的上下文对象，可供并发控制共享 数据定义在 src/app.rs 中的 **Context** 定义。
 
 应用执行流程图:
@@ -29,7 +31,7 @@ subgraph Init [Runtime Basic]
     direction LR
     ID(Init App Directroy)
     ConifgF(Init Config File)
-    ID --> ConifgF 
+    ID --> ConifgF
 end
 
 subgraph DoInit [Runtime Do Init]
