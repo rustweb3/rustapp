@@ -1,9 +1,8 @@
 use {
     crate::app::RunTime,
     anyhow::{Ok, Result},
-    std::future::Future,
-    std::pin::Pin,
-    std::sync::Arc,
+    log::{error, info},
+    std::{future::Future, pin::Pin, sync::Arc},
 };
 
 mod hello;
@@ -25,6 +24,13 @@ macro_rules! init_job_maps {
 
 pub async fn do_job(name: &str, _runtime: &RunTime) -> Result<()> {
     let jobs = init_job_maps!({ hello });
+
+    if !jobs.contains_key(name) {
+        error!("job {} not found", name);
+        info!("available jobs: {:?}", jobs.keys());
+        return Err(anyhow::anyhow!("job {} not found", name));
+    }
+
     let job = jobs.get(name).unwrap();
     job(_runtime).await?;
     Ok(())
